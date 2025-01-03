@@ -147,15 +147,11 @@ impl Calculator {
     }
 
     fn set_var(&mut self, name: &str, value: f64) {
-        println!("DEBUG: Setting var '{}' to {} (current vars: {:?})", name, value, self.variables);
         self.variables.insert(name.to_string(), value);
-        println!("DEBUG: After set: {:?}", self.variables);
     }
 
     fn get_var(&self, name: &str) -> Option<f64> {
         let result = self.variables.get(name).copied();
-        println!("DEBUG: Looking up var '{}', found: {:?} (current vars: {:?})", 
-            name, result, self.variables);
         result
     }
 
@@ -173,21 +169,7 @@ impl Calculator {
 
 fn main() {
     let mut calc = Calculator::new();
-    println!("RPN Calculator with Coroutines");
-    println!("Commands:");
-    println!("  number - Push number onto stack");
-    println!("  + - Add");
-    println!("  - - Subtract");
-    println!("  * - Multiply");
-    println!("  / - Divide");
-    println!("  dup - Duplicate top value");
-    println!("  swap - Swap top two values");
-    println!("  drop - Drop top value");
-    println!("  ... - Drop current coroutine");
-    println!("  'var = value - Assign value to variable");
-    println!("  var - Push variable value onto stack");
-    println!("  q - Quit");
-
+    
     loop {
         print!("> ");
         io::stdout().flush().unwrap();
