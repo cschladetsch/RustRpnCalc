@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{VecDeque, HashMap};
 use std::io::{self, Write};
 
 #[derive(Clone)]
@@ -16,7 +16,6 @@ enum Operation {
     Dup,
     Swap,
     Drop,
-    Compose(Box<Coroutine>, Box<Coroutine>),
 }
 
 #[derive(Clone)]
@@ -115,62 +114,65 @@ impl Coroutine {
                 self.stack.pop();
                 CoroResult::Stack(self.stack.clone())
             },
-            Operation::Compose(first, second) => {
-                let mut first_coro = (**first).clone();
-                match first_coro.execute(self.stack.clone()) {
-                    CoroResult::Stack(new_stack) => {
-                        let mut second_coro = (**second).clone();
-                        second_coro.execute(new_stack)
-                    },
-                }
-            },
         }
     }
 }
 
-struct RPNCalculator {
+struct Calculator {
     coro_stack: VecDeque<Coroutine>,
     value_stack: Vec<f64>,
+    variables: HashMap<String, f64>,
 }
 
-impl RPNCalculator {
+impl Calculator {
     fn new() -> Self {
-        RPNCalculator {
+        Calculator {
             coro_stack: VecDeque::new(),
             value_stack: Vec::new(),
+            variables: HashMap::new(),
         }
     }
 
     fn create_coro(&mut self, op: Operation) {
         let mut coro = Coroutine::new(op);
-        match coro.execute(self.value_stack.clone()) {
-            CoroResult::Stack(new_stack) => {
-                self.value_stack = new_stack;
-                self.coro_stack.push_back(coro);
-            },
-        }
+        let CoroResult::Stack(new_stack) = coro.execute(self.value_stack.clone());
+        self.value_stack = new_stack;
+        self.coro_stack.push_back(coro);
     }
 
     fn drop_current(&mut self) {
-        self.coro_stack.pop_back();
-        if let Some(coro) = self.coro_stack.back_mut() {
-            match coro.execute(Vec::new()) {
-                CoroResult::Stack(new_stack) => {
-                    self.value_stack = new_stack;
-                },
-            }
-        } else {
-            self.value_stack.clear();
+        if !self.value_stack.is_empty() {
+            self.value_stack.pop();
         }
     }
 
-    fn print_stack(&self) {
+    fn set_var(&mut self, name: &str, value: f64) {
+        println!("DEBUG: Setting var '{}' to {} (current vars: {:?})", name, value, self.variables);
+        self.variables.insert(name.to_string(), value);
+        println!("DEBUG: After set: {:?}", self.variables);
+    }
+
+    fn get_var(&self, name: &str) -> Option<f64> {
+        let result = self.variables.get(name).copied();
+        println!("DEBUG: Looking up var '{}', found: {:?} (current vars: {:?})", 
+            name, result, self.variables);
+        result
+    }
+
+    fn show_state(&self) {
         println!("Stack: {:?}", self.value_stack);
+        if !self.variables.is_empty() {
+            println!("Variables: {}", 
+                self.variables.iter()
+                    .map(|(k,v)| format!("{}={:.1}", k, v))
+                    .collect::<Vec<_>>()
+                    .join(" "));
+        }
     }
 }
 
 fn main() {
-    let mut calc = RPNCalculator::new();
+    let mut calc = Calculator::new();
     println!("RPN Calculator with Coroutines");
     println!("Commands:");
     println!("  number - Push number onto stack");
@@ -182,8 +184,8 @@ fn main() {
     println!("  swap - Swap top two values");
     println!("  drop - Drop top value");
     println!("  ... - Drop current coroutine");
-    println!("  # - Chain two coroutines (squares the top number)");
-    println!("  stack - Show full stack");
+    println!("  'var = value - Assign value to variable");
+    println!("  var - Push variable value onto stack");
     println!("  q - Quit");
 
     loop {
@@ -191,44 +193,70 @@ fn main() {
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-        let input = input.trim();
+        match io::stdin().read_line(&mut input) {
+            Ok(_) => {
+                let input = input.trim().trim_start_matches('>').trim();
+                if input.is_empty() { continue; }
 
-        match input {
-            "q" => break,
-            "..." => calc.drop_current(),
-            "stack" => calc.print_stack(),
-            "#" => {
-                let coro1 = Coroutine::new(Operation::Dup);
-                let coro2 = Coroutine::new(Operation::Mul);
-                calc.create_coro(Operation::Compose(
-                    Box::new(coro1),
-                    Box::new(coro2)
-                ));
-            },
-            _ => {
-                // Handle space-separated tokens
-                for token in input.split_whitespace() {
-                    match token {
-                        "+" => calc.create_coro(Operation::Add),
-                        "-" => calc.create_coro(Operation::Sub),
-                        "*" => calc.create_coro(Operation::Mul),
-                        "/" => calc.create_coro(Operation::Div),
-                        "dup" => calc.create_coro(Operation::Dup),
-                        "swap" => calc.create_coro(Operation::Swap),
-                        "drop" => calc.create_coro(Operation::Drop),
-                        num => {
-                            if let Ok(n) = num.parse::<f64>() {
-                                calc.create_coro(Operation::Push(n));
-                            } else {
-                                println!("Invalid input: {}", num);
+                match input {
+                    "q" => break,
+                    "..." => calc.drop_current(),
+                    input => {
+                        let tokens: Vec<&str> = input.split_whitespace().collect();
+                        let mut i = 0;
+                        while i < tokens.len() {
+                            // Handle variable assignment
+                            if i + 2 < tokens.len() && tokens[i].starts_with('\'') && tokens[i+1] == "=" {
+                                let var_name = tokens[i].trim_matches('\'');
+                                let value_token = tokens[i+2];
+                                
+                                if let Ok(value) = value_token.parse::<f64>() {
+                                    calc.set_var(var_name, value);
+                                    i += 3;
+                                    continue;
+                                } else if let Some(val) = calc.get_var(value_token) {
+                                    calc.set_var(var_name, val);
+                                    i += 3;
+                                    continue;
+                                } else {
+                                    println!("Invalid value for assignment: {}", value_token);
+                                    i += 3;
+                                    continue;
+                                }
                             }
+
+                            // Handle regular operators and numbers
+                            match tokens[i] {
+                                "+" => calc.create_coro(Operation::Add),
+                                "-" => calc.create_coro(Operation::Sub),
+                                "*" => calc.create_coro(Operation::Mul),
+                                "/" => calc.create_coro(Operation::Div),
+                                "dup" => calc.create_coro(Operation::Dup),
+                                "swap" => calc.create_coro(Operation::Swap),
+                                "drop" => calc.create_coro(Operation::Drop),
+                                token => {
+                                    // Skip handling token if it's part of a variable assignment
+                                    if (i + 1 < tokens.len() && tokens[i+1] == "=") || token == "=" {
+                                        i += 1;
+                                        continue;
+                                    }
+                                    
+                                    if let Some(val) = calc.get_var(token) {
+                                        calc.create_coro(Operation::Push(val));
+                                    } else if let Ok(num) = token.parse::<f64>() {
+                                        calc.create_coro(Operation::Push(num));
+                                    } else if !token.starts_with('\'') && token != "=" {
+                                        println!("Invalid input or undefined variable: {}", token);
+                                    }
+                                }
+                            }
+                            i += 1;
                         }
                     }
                 }
+                calc.show_state();
             }
+            Err(error) => println!("Error: {}", error),
         }
-
-        calc.print_stack();
     }
 }
