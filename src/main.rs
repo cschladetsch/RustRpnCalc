@@ -3,10 +3,7 @@ use std::io::{self, Write};
 
 #[derive(Clone)]
 enum CoroResult {
-    Value(f64),
     Stack(Vec<f64>),
-    Coroutine(Box<Coroutine>),
-    None,
 }
 
 #[derive(Clone)]
@@ -19,15 +16,12 @@ enum Operation {
     Dup,
     Swap,
     Drop,
-    // Coroutine operations
-    Chain(Box<Coroutine>),
     Compose(Box<Coroutine>, Box<Coroutine>),
 }
 
 #[derive(Clone)]
 struct Coroutine {
     operation: Operation,
-    next: Option<Box<Coroutine>>,
     stack: Vec<f64>,
 }
 
@@ -35,7 +29,6 @@ impl Coroutine {
     fn new(operation: Operation) -> Self {
         Coroutine {
             operation,
-            next: None,
             stack: Vec::new(),
         }
     }
@@ -122,20 +115,6 @@ impl Coroutine {
                 self.stack.pop();
                 CoroResult::Stack(self.stack.clone())
             },
-            Operation::Chain(coro) => {
-                let mut new_coro = (**coro).clone();
-                match new_coro.execute(self.stack.clone()) {
-                    CoroResult::Stack(new_stack) => {
-                        if let Some(next) = &self.next {
-                            let mut next_coro = (**next).clone();
-                            next_coro.execute(new_stack)
-                        } else {
-                            CoroResult::Stack(new_stack)
-                        }
-                    },
-                    other => other,
-                }
-            },
             Operation::Compose(first, second) => {
                 let mut first_coro = (**first).clone();
                 match first_coro.execute(self.stack.clone()) {
@@ -143,7 +122,6 @@ impl Coroutine {
                         let mut second_coro = (**second).clone();
                         second_coro.execute(new_stack)
                     },
-                    other => other,
                 }
             },
         }
@@ -170,27 +148,6 @@ impl RPNCalculator {
                 self.value_stack = new_stack;
                 self.coro_stack.push_back(coro);
             },
-            CoroResult::Coroutine(new_coro) => {
-                self.coro_stack.push_back(*new_coro);
-                self.execute_current();
-            },
-            _ => {},
-        }
-    }
-
-    fn execute_current(&mut self) {
-        if let Some(mut coro) = self.coro_stack.pop_back() {
-            match coro.execute(self.value_stack.clone()) {
-                CoroResult::Stack(new_stack) => {
-                    self.value_stack = new_stack;
-                    self.coro_stack.push_back(coro);
-                },
-                CoroResult::Coroutine(new_coro) => {
-                    self.coro_stack.push_back(*new_coro);
-                    self.execute_current();
-                },
-                _ => {},
-            }
         }
     }
 
@@ -201,7 +158,6 @@ impl RPNCalculator {
                 CoroResult::Stack(new_stack) => {
                     self.value_stack = new_stack;
                 },
-                _ => {},
             }
         } else {
             self.value_stack.clear();
@@ -226,8 +182,7 @@ fn main() {
     println!("  swap - Swap top two values");
     println!("  drop - Drop top value");
     println!("  ... - Drop current coroutine");
-    println!("  ! - Replace current coroutine");
-    println!("  # - Chain two coroutines");
+    println!("  # - Chain two coroutines (squares the top number)");
     println!("  stack - Show full stack");
     println!("  q - Quit");
 
@@ -242,16 +197,8 @@ fn main() {
         match input {
             "q" => break,
             "..." => calc.drop_current(),
-            "+" => calc.create_coro(Operation::Add),
-            "-" => calc.create_coro(Operation::Sub),
-            "*" => calc.create_coro(Operation::Mul),
-            "/" => calc.create_coro(Operation::Div),
-            "dup" => calc.create_coro(Operation::Dup),
-            "swap" => calc.create_coro(Operation::Swap),
-            "drop" => calc.create_coro(Operation::Drop),
             "stack" => calc.print_stack(),
             "#" => {
-                // Example of chaining coroutines
                 let coro1 = Coroutine::new(Operation::Dup);
                 let coro2 = Coroutine::new(Operation::Mul);
                 calc.create_coro(Operation::Compose(
@@ -260,10 +207,24 @@ fn main() {
                 ));
             },
             _ => {
-                if let Ok(num) = input.parse::<f64>() {
-                    calc.create_coro(Operation::Push(num));
-                } else {
-                    println!("Invalid input");
+                // Handle space-separated tokens
+                for token in input.split_whitespace() {
+                    match token {
+                        "+" => calc.create_coro(Operation::Add),
+                        "-" => calc.create_coro(Operation::Sub),
+                        "*" => calc.create_coro(Operation::Mul),
+                        "/" => calc.create_coro(Operation::Div),
+                        "dup" => calc.create_coro(Operation::Dup),
+                        "swap" => calc.create_coro(Operation::Swap),
+                        "drop" => calc.create_coro(Operation::Drop),
+                        num => {
+                            if let Ok(n) = num.parse::<f64>() {
+                                calc.create_coro(Operation::Push(n));
+                            } else {
+                                println!("Invalid input: {}", num);
+                            }
+                        }
+                    }
                 }
             }
         }
