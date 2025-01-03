@@ -4,7 +4,7 @@ A Rust implementation of a Reverse Polish Notation (RPN) calculator that uses co
 
 ## Demo
 
-![Image](resources/Untitled3.png]
+![Image](resources/Untitled3.png)
 
 
 ## Features
