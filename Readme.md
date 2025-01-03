@@ -2,6 +2,11 @@
 
 A Rust implementation of a Reverse Polish Notation (RPN) calculator that uses coroutines for operation handling and supports variable assignment.
 
+## Demo
+
+![Image](resources/Untitled3.png]
+
+
 ## Features
 
 - RPN-style calculation
