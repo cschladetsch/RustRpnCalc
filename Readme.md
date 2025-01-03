@@ -1,66 +1,75 @@
-# RPN Calculator with Coroutines
+# RPN Coroutine Calculator
 
-A Rust implementation of a Reverse Polish Notation (RPN) calculator where each operation is implemented as a coroutine (a computation that can be suspended and resumed). 
+A Rust implementation of a Reverse Polish Notation (RPN) calculator that uses coroutines for operation handling and supports variable assignment.
 
-## What is RPN?
+## Features
 
-RPN (Reverse Polish Notation) is a way of writing arithmetic expressions without parentheses. Instead of writing `3 + 4`, you write `3 4 +`. The numbers go onto a stack, and operators work with the numbers on the stack.
+- RPN-style calculation
+- Variable assignment and usage
+- Basic arithmetic operations (+, -, *, /)
+- Stack manipulation (dup, swap, drop)
+- All numbers are handled as double precision floating point
 
-Examples:
-- `3 4 +` equals 7 (push 3, push 4, add them)
-- `5 2 *` equals 10 (push 5, push 2, multiply them)
-- `10 5 2 + -` equals 3 (push 10, push 5, push 2, add 5&2 to get 7, subtract 7 from 10)
+## Usage
 
-## What are Coroutines in this Context?
-
-In this calculator, each operation (addition, multiplication, etc.) is a coroutine. A coroutine:
-1. Takes the current stack as input
-2. Performs its operation
-3. Returns a new stack 
-4. Can be suspended using '...' to return to a previous state
-
-The coroutine approach means each operation:
-- Maintains its own stack state
-- Can be composed with other operations
-- Can be suspended and resumed
-
-## Building and Running
-
+### Building and Running
 ```bash
 cargo build
 cargo run
 ```
 
-## Commands
+Or use the provided `r` script:
+```bash
+./r
+```
 
-All numbers are double-precision floating point.
+### Basic Operations
 
-Basic operations:
+Enter numbers and operators in RPN format:
+```
+> 2 3 +     # Push 2, push 3, add them
+Stack: [5.0]
+
+> 10 2 *    # Push 10, push 2, multiply them
+Stack: [20.0]
+```
+
+### Variables
+
+Assign and use variables:
+```
+> 2 'a =    # Store 2 in variable 'a'
+> 3 'b =    # Store 3 in variable 'b'
+> a b +     # Add the values of a and b
+Stack: [5.0]
+```
+
+### Stack Operations
+```
+> 2 dup     # Duplicate top value
+Stack: [2.0, 2.0]
+
+> 2 3 swap  # Swap top two values
+Stack: [3.0, 2.0]
+
+> drop      # Remove top value
+Stack: [2.0]
+```
+
+### Commands
 - Numbers: Push onto stack
-- `+`: Add top two numbers
-- `-`: Subtract top number from second top
-- `*`: Multiply top two numbers
-- `/`: Divide second top by top
-
-Stack operations:
-- `dup`: Duplicate top number
-- `swap`: Swap top two numbers
-- `drop`: Remove top number
-
-Coroutine control:
-- `...`: Drop current coroutine and return to previous state
-- `stack`: Show current stack contents
+- `+`, `-`, `*`, `/`: Arithmetic operations
+- `dup`: Duplicate top value
+- `swap`: Swap top two values
+- `drop`: Remove top value
+- `'name = value`: Assign value to variable
+- `name`: Push variable's value onto stack
 - `q`: Quit program
 
-## Example Usage
+### Coroutine Implementation
 
-```
-> 3 4 5     # Push three numbers
-Stack: [3.0, 4.0, 5.0]
-
-> +         # Add top two numbers (4 + 5)
-Stack: [3.0, 9.0]
-
-> +         # Add again (3 + 9)
-Stack: [12.0]
-```
+Each operation is implemented as a coroutine that:
+1. Takes the current stack as input
+2. Performs its operation
+3. Returns a new stack state
+4. Can be suspended or dropped using '...'
