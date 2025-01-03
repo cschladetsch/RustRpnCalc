@@ -1,71 +1,66 @@
 # RPN Calculator with Coroutines
 
-A Rust implementation of a Reverse Polish Notation (RPN) calculator that uses coroutines for operation handling. All numbers are handled as double-precision floating point values.
+A Rust implementation of a Reverse Polish Notation (RPN) calculator where each operation is implemented as a coroutine (a computation that can be suspended and resumed). 
 
-## Features
+## What is RPN?
 
-- RPN-style input with space-separated tokens
-- Double-precision floating point arithmetic
-- Stack-based operations
-- Coroutine-based execution model
-- Support for basic arithmetic: +, -, *, /
-- Stack manipulation: dup, swap, drop
-- Coroutine chaining with the # operator
+RPN (Reverse Polish Notation) is a way of writing arithmetic expressions without parentheses. Instead of writing `3 + 4`, you write `3 4 +`. The numbers go onto a stack, and operators work with the numbers on the stack.
 
-## Quick Start
+Examples:
+- `3 4 +` equals 7 (push 3, push 4, add them)
+- `5 2 *` equals 10 (push 5, push 2, multiply them)
+- `10 5 2 + -` equals 3 (push 10, push 5, push 2, add 5&2 to get 7, subtract 7 from 10)
+
+## What are Coroutines in this Context?
+
+In this calculator, each operation (addition, multiplication, etc.) is a coroutine. A coroutine:
+1. Takes the current stack as input
+2. Performs its operation
+3. Returns a new stack 
+4. Can be suspended using '...' to return to a previous state
+
+The coroutine approach means each operation:
+- Maintains its own stack state
+- Can be composed with other operations
+- Can be suspended and resumed
+
+## Building and Running
 
 ```bash
 cargo build
 cargo run
 ```
 
-## Usage
+## Commands
 
-Enter numbers and operators separated by spaces. Numbers are pushed onto the stack, and operators work on the stack values.
+All numbers are double-precision floating point.
 
-### Basic Operations
-
-```
-> 1 2 3    # Pushes 1.0, 2.0, 3.0 onto stack
-Stack: [1.0, 2.0, 3.0]
-> + +      # Add twice: first 2+3, then 1+5
-Stack: [6.0]
-```
-
-### Commands
-
+Basic operations:
 - Numbers: Push onto stack
 - `+`: Add top two numbers
 - `-`: Subtract top number from second top
 - `*`: Multiply top two numbers
 - `/`: Divide second top by top
+
+Stack operations:
 - `dup`: Duplicate top number
 - `swap`: Swap top two numbers
 - `drop`: Remove top number
-- `...`: Drop current coroutine
-- `#`: Chain coroutines (squares the top number)
+
+Coroutine control:
+- `...`: Drop current coroutine and return to previous state
 - `stack`: Show current stack contents
 - `q`: Quit program
 
-### Examples
+## Example Usage
 
 ```
-# Basic arithmetic
-> 10 5 -
-Stack: [5.0]
+> 3 4 5     # Push three numbers
+Stack: [3.0, 4.0, 5.0]
 
-# Multiple operations
-> 2 3 4 + *
-Stack: [14.0]   # 2 * (3 + 4)
+> +         # Add top two numbers (4 + 5)
+Stack: [3.0, 9.0]
 
-# Stack manipulation
-> 5 dup
-Stack: [5.0, 5.0]
+> +         # Add again (3 + 9)
+Stack: [12.0]
 ```
-
-## Implementation Details
-
-- Uses Rust's type system to ensure type safety
-- All numbers are f64 (double-precision floating point)
-- Implements coroutine-based operation handling
-- Stack-based execution model matches RPN semantics
