@@ -1,80 +1,85 @@
-# RPN Coroutine Calculator
+# Stack-Based Calculator Framework
 
-A Rust implementation of a Reverse Polish Notation (RPN) calculator that uses coroutines for operation handling and supports variable assignment.
-
-## Demo
-
-![Image](resources/Untitled3.png)
-
+This is a Rust-based stack-based calculator framework that supports basic arithmetic operations, coroutines, stack inspection, and scoped variables.
 
 ## Features
 
-- RPN-style calculation
-- Variable assignment and usage
-- Basic arithmetic operations (+, -, *, /)
-- Stack manipulation (dup, swap, drop)
-- All numbers are handled as double precision floating point
+### Supported Operations
+- **Basic Arithmetic**:
+  - `+`: Addition
+  - `-`: Subtraction
+  - `*`: Multiplication
+  - `/`: Division (with division-by-zero protection)
 
-## Usage
+- **Stack Inspection**:
+  - `depth`: Prints the number of elements in the data stack.
+  - `pick N`: Retrieves the Nth entry from the data stack (0-indexed from the top) without modifying it.
+
+- **Variables**:
+  - Declare variables using `'var_name`.
+  - Retrieve variable values by referencing their name.
+
+- **Coroutines**:
+  - Define coroutines with `{}`.
+  - Execute coroutines with `exec`.
+
+### Example Usage
+#### Basic Arithmetic
+```plaintext
+> 1 2 +
+Data Stack:
+[0] 3.00
+Context Stack:
+[empty]
+```
+
+#### Stack Inspection
+```plaintext
+> 1 2 3 depth
+Stack depth: 3
+Data Stack:
+[0] 3.00
+[1] 2.00
+[2] 1.00
+Context Stack:
+[empty]
+
+> pick 1
+Picked: Number(2.00)
+```
+
+#### Coroutines and Variables
+```plaintext
+> 1 'x
+> { x 2 * } exec
+Data Stack:
+[0] 2.00
+Context Stack:
+[empty]
+```
 
 ### Building and Running
-```bash
-cargo build
-cargo run
-```
+1. Clone the repository.
+2. Navigate to the project directory.
+3. Build the project:
+   ```bash
+   cargo build
+   ```
+4. Run the REPL:
+   ```bash
+   cargo run
+   ```
 
-Or use the provided `r` script:
-```bash
-./r
-```
+### Project Structure
+- **`src/main.rs`**:
+  Entry point of the application.
+- **`src/stack_calculator.rs`**:
+  Implementation of the stack-based calculator.
 
-### Basic Operations
+### Future Enhancements
+- Add support for more advanced stack manipulation (e.g., `dup`, `swap`, `drop`).
+- Extend coroutine functionality with parameters.
 
-Enter numbers and operators in RPN format:
-```
-> 2 3 +     # Push 2, push 3, add them
-Stack: [5.0]
+### Contributing
+Contributions are welcome! Feel free to submit issues or pull requests.
 
-> 10 2 *    # Push 10, push 2, multiply them
-Stack: [20.0]
-```
-
-### Variables
-
-Assign and use variables:
-```
-> 2 'a =    # Store 2 in variable 'a'
-> 3 'b =    # Store 3 in variable 'b'
-> a b +     # Add the values of a and b
-Stack: [5.0]
-```
-
-### Stack Operations
-```
-> 2 dup     # Duplicate top value
-Stack: [2.0, 2.0]
-
-> 2 3 swap  # Swap top two values
-Stack: [3.0, 2.0]
-
-> drop      # Remove top value
-Stack: [2.0]
-```
-
-### Commands
-- Numbers: Push onto stack
-- `+`, `-`, `*`, `/`: Arithmetic operations
-- `dup`: Duplicate top value
-- `swap`: Swap top two values
-- `drop`: Remove top value
-- `'name = value`: Assign value to variable
-- `name`: Push variable's value onto stack
-- `q`: Quit program
-
-### Coroutine Implementation
-
-Each operation is implemented as a coroutine that:
-1. Takes the current stack as input
-2. Performs its operation
-3. Returns a new stack state
-4. Can be suspended or dropped using '...'
