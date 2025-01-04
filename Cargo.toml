@@ -1,6 +1,12 @@
 [package]
-name = "rpn_coroutines"
+name = "stack_calculator"
 version = "0.1.0"
 edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A stack-based calculator framework written in Rust."
+license = "MIT"
+repository = "https://github.com/yourusername/stack_calculator"
+readme = "README.md"
 
 [dependencies]
+
