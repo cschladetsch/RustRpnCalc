@@ -9,4 +9,5 @@ repository = "https://github.com/yourusername/stack_calculator"
 readme = "README.md"
 
 [dependencies]
+colored = "2.0"
 

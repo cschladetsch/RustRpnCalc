@@ -1,6 +1,6 @@
-// src/stack_calculator.rs
 use std::collections::HashMap;
 use std::io::{self, Write};
+use colored::*;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -47,27 +47,29 @@ impl StackCalculator {
                         Value::Number(a / b)
                     }
                 }),
-                "swap" => {
-                    if self.data_stack.len() < 2 {
-                        eprintln!("Error: Not enough values to swap.");
-                    } else {
-                        let b = self.pop().unwrap();
-                        let a = self.pop().unwrap();
-                        self.push(b);
-                        self.push(a);
-                    }
-                },
                 "{" => {
-                    // Parse and construct coroutine
                     if let Some(end_index) = self.find_closing_brace(&tokens[index..]) {
                         let coroutine_tokens = tokens[index + 1..index + end_index - 1].to_vec();
                         self.push(Value::Coroutine(coroutine_tokens));
-                        index += end_index - 1; // Skip to the end of the coroutine
+                        index += end_index - 1;
                     } else {
                         eprintln!("Error: Unmatched opening brace.");
                     }
                 }
-                "exec" => self.execute_coroutine(), // Execute coroutine if present
+                "exec" => self.execute_coroutine(),
+                _ if token.starts_with("'") => {
+                    let var_name = &token[1..];
+                    if let Some(value) = self.pop() {
+                        self.variables.insert(var_name.to_string(), value);
+                    } else {
+                        eprintln!("Error: No value to assign to variable '{}'.", var_name);
+                    }
+                }
+                _ if self.variables.contains_key(token) => {
+                    if let Some(value) = self.variables.get(token).cloned() {
+                        self.push(value);
+                    }
+                }
                 _ => match token.parse::<f64>() {
                     Ok(num) => self.push(Value::Number(num)),
                     Err(_) => eprintln!("Unknown token: {}", token),
@@ -140,23 +142,28 @@ impl StackCalculator {
     }
 
     fn display_stacks(&self) {
-        println!("Data Stack:");
+        println!("{}", "Data Stack:".bold().blue());
         if self.data_stack.is_empty() {
-            println!("[empty]");
+            println!("{}", "[empty]".dimmed());
         } else {
             for (i, value) in self.data_stack.iter().rev().enumerate() {
                 match value {
-                    Value::Number(num) => println!("[{}] {:.2}", i, num),
-                    Value::Coroutine(coroutine) => println!("[{}] {{ {} }}", i, coroutine.join(" ")),
+                    Value::Number(num) => println!("[{}] {}", i, format!("{:.2}", num).green()),
+                    Value::Coroutine(coroutine) => println!("[{}] {}", i, format!("{{ {} }}", coroutine.join(" ")).yellow()),
                 }
             }
         }
-        println!("Context Stack:");
+        println!("{}", "Context Stack:".bold().blue());
         if self.context_stack.is_empty() {
-            println!("[empty]");
+            println!("{}", "[empty]".dimmed());
         } else {
             for (i, context) in self.context_stack.iter().rev().enumerate() {
-                println!("[{}] {:?}", i, context);
+                let formatted_context: String = context
+                    .iter()
+                    .map(|(k, v)| format!("{}: {:?}", k, v))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                println!("[{}] {}", i, formatted_context.dimmed());
             }
         }
     }
@@ -170,10 +177,10 @@ impl StackCalculatorFramework {
     }
 
     pub fn run_calculator_repl(calculator: &mut StackCalculator) {
-        println!("Welcome to the Stack-Based Calculator Framework! Enter 'exit' to quit.");
         let stdin = io::stdin();
         loop {
-            print!("> ");
+            //print!("λ ");
+			print!("{}", "λ ".yellow());
             io::stdout().flush().unwrap();
             let mut input = String::new();
             if stdin.read_line(&mut input).is_ok() {
