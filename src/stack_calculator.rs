@@ -1,3 +1,4 @@
+// src/stack_calculator.rs
 use std::collections::HashMap;
 use std::io::{self, Write};
 
@@ -31,7 +32,9 @@ impl StackCalculator {
     }
 
     pub fn execute(&mut self, tokens: &[String]) {
-        for token in tokens {
+        let mut index = 0;
+        while index < tokens.len() {
+            let token = &tokens[index];
             match token.as_str() {
                 "+" => self.binary_op(|a, b| Value::Number(a + b)),
                 "-" => self.binary_op(|a, b| Value::Number(a - b)),
@@ -44,33 +47,34 @@ impl StackCalculator {
                         Value::Number(a / b)
                     }
                 }),
+                "swap" => {
+                    if self.data_stack.len() < 2 {
+                        eprintln!("Error: Not enough values to swap.");
+                    } else {
+                        let b = self.pop().unwrap();
+                        let a = self.pop().unwrap();
+                        self.push(b);
+                        self.push(a);
+                    }
+                },
                 "{" => {
-                    if let Some(end_index) = self.find_closing_brace(&tokens) {
-                        let coroutine_tokens = tokens[1..end_index - 1].to_vec();
+                    // Parse and construct coroutine
+                    if let Some(end_index) = self.find_closing_brace(&tokens[index..]) {
+                        let coroutine_tokens = tokens[index + 1..index + end_index - 1].to_vec();
                         self.push(Value::Coroutine(coroutine_tokens));
+                        index += end_index - 1; // Skip to the end of the coroutine
                     } else {
                         eprintln!("Error: Unmatched opening brace.");
                     }
                 }
-                _ if token.starts_with("'") => {
-                    let var_name = &token[1..];
-                    if let Some(value) = self.pop() {
-                        self.variables.insert(var_name.to_string(), value);
-                    } else {
-                        eprintln!("Error: No value to assign to variable '{}'.", var_name);
-                    }
-                }
-                _ if self.variables.contains_key(token) => {
-                    if let Some(value) = self.variables.get(token).cloned() {
-                        self.push(value);
-                    }
-                }
+                "exec" => self.execute_coroutine(), // Execute coroutine if present
                 _ => match token.parse::<f64>() {
                     Ok(num) => self.push(Value::Number(num)),
                     Err(_) => eprintln!("Unknown token: {}", token),
                 },
             }
             self.display_stacks();
+            index += 1;
         }
     }
 
