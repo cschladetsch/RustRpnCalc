@@ -153,7 +153,7 @@ impl StackCalculator {
                 }
             }
         }
-        println!("{}", "Context Stack:".bold().blue());
+        println!("{}", "Context Stack:".bold().purple());
         if self.context_stack.is_empty() {
             println!("{}", "[empty]".dimmed());
         } else {
