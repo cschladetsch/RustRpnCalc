@@ -1,46 +1,41 @@
-// src/calculator/stack.rs
-use std::collections::HashMap;
-use super::value::Value;
-
 pub struct Stack {
-    pub data_stack: Vec<Value>,
-    pub context_stack: Vec<HashMap<String, Value>>,
-    pub variables: HashMap<String, Value>,
+    values: Vec<f64>, // Underlying storage for the stack
 }
 
 impl Stack {
     pub fn new() -> Self {
-        Stack {
-            data_stack: Vec::new(),
-            context_stack: Vec::new(),
-            variables: HashMap::new(),
+        Stack { values: Vec::new() }
+    }
+
+    pub fn push(&mut self, value: f64) {
+        self.values.push(value);
+    }
+
+    pub fn pop(&mut self) -> Option<f64> {
+        self.values.pop()
+    }
+
+    pub fn dup(&mut self) {
+        if let Some(&top) = self.values.last() {
+            self.values.push(top);
         }
     }
 
-    pub fn push(&mut self, value: Value) {
-        self.data_stack.push(value);
-    }
-
-    pub fn pop(&mut self) -> Option<Value> {
-        self.data_stack.pop()
-    }
-
-    pub fn get_variable(&self, name: &str) -> Option<&Value> {
-        self.variables.get(name)
-    }
-
-    pub fn set_variable(&mut self, name: String, value: Value) {
-        self.variables.insert(name, value);
-    }
-
-    pub fn push_context(&mut self) {
-        self.context_stack.push(self.variables.clone());
-        self.variables = HashMap::new();
-    }
-
-    pub fn pop_context(&mut self) {
-        if let Some(previous) = self.context_stack.pop() {
-            self.variables = previous;
+    pub fn binary_op<F>(&mut self, op: F)
+    where
+        F: Fn(f64, f64) -> f64,
+    {
+        if let (Some(b), Some(a)) = (self.pop(), self.pop()) {
+            self.push(op(a, b));
         }
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<f64> {
+        self.values.iter() // Return an iterator over the stack
+    }
+
+    pub fn len(&self) -> usize {
+        self.values.len() // Return the number of elements in the stack
     }
 }
+
