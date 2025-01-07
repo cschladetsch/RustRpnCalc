@@ -1,4 +1,4 @@
-// src/calculator/display.rs
+// === src/calculator/display.rs ===
 use colored::*;
 use super::stack::Stack;
 use super::value::Value;
@@ -13,7 +13,7 @@ impl Display {
     }
 
     pub fn display_stacks(&self, stack: &Stack) {
-        println!("{}", "Data Stack:".bold().blue());
+        //println!("{}", "Data Stack:".bold().blue());
         if stack.data_stack.is_empty() {
             println!("{}", "[empty]".dimmed());
         } else {

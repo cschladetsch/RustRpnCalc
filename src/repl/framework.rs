@@ -1,4 +1,4 @@
-// src/repl/framework.rs
+// === src/repl/framework.rs ===
 use std::io::{self, Write};
 use colored::*;
 use crate::calculator::Calculator;
@@ -22,8 +22,7 @@ impl Framework {
                 if input.eq_ignore_ascii_case("exit") {
                     break;
                 }
-                let tokens: Vec<String> = input.split_whitespace().map(String::from).collect();
-                calculator.execute(&tokens);
+                calculator.execute(input);
             }
         }
     }
