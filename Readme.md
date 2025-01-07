@@ -45,8 +45,8 @@ A modular Reverse Polish Notation (RPN) calculator implemented in Rust. This cal
 Clone the repository and build using Cargo:
 
 ```bash
-git clone <your-repository-url>
-cd RustRpn
+git clone git@github.com:cschladetsch/RustRpnCalc.git
+cd RustRpnCalc
 cargo build --release
 ```
 
