@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Your Name <your.email@example.com>"]
 description = "A stack-based calculator framework written in Rust."
 license = "MIT"
-repository = "https://github.com/yourusername/stack_calculator"
+repository = "https://github.com/cschladetsch/stack_calculator"
 readme = "README.md"
 
 [dependencies]
