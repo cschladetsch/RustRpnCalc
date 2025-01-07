@@ -4,7 +4,7 @@ This is a Rust-based stack-based calculator framework that supports basic arithm
 
 ## Features
 
-![Image]/(resources/Untitled3.png)
+![Image](resources/Untitled3.png)
 
 ### Supported Operations
 - **Basic Arithmetic**:
