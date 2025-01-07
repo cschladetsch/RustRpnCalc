@@ -1,3 +1,0 @@
-alias cm='c src/main.rs'
-alias cs='c src/stack_calculator.rs'
-
