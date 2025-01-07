@@ -4,12 +4,40 @@ A modular Reverse Polish Notation (RPN) calculator implemented in Rust. This cal
 
 ## Features
 
+![image](/resources/Untitled3.png)
+
 - Basic arithmetic operations (+, -, *, /)
-- Stack-based operations
-- Variable assignment and retrieval
+- Stack-based operations with clear indexed output:
+  ```
+  λ 1 2 3
+  Data Stack:
+  [0] 1.00
+  [1] 2.00
+  [2] 3.00
+  ```
+- Variable assignment and retrieval:
+  ```
+  λ 42 'x
+  Data Stack:
+  [empty]
+  λ x
+  Data Stack:
+  [0] 42.00
+  ```
 - Coroutine support with nested execution contexts
-- Debug mode for viewing context stacks
+- Detailed debug mode for viewing context stacks:
+  ```
+  λ 5 'x { x 2 * } 'double exec
+  Data Stack:
+  [0] 10.00
+  Context Stack:
+  [0] x: Number(5)
+  ```
 - Colored output for better visualization
+  - Blue for stack headers
+  - Green for numbers
+  - Yellow for coroutines
+  - Purple for context stack (in debug mode)
 - Modular architecture for easy extension
 
 ## Installation
@@ -34,15 +62,69 @@ Run with debug mode to see context stacks:
 cargo run -- --debug
 ```
 
-### Basic Operations
+### Demo
 
-The calculator uses RPN (Reverse Polish Notation), where operators follow their operands:
+Here's a comprehensive demonstration of the calculator's features:
 
 ```
-λ 5 3 +    # Adds 5 and 3
-λ 10 2 -   # Subtracts 2 from 10
-λ 4 3 *    # Multiplies 4 and 3
-λ 15 3 /   # Divides 15 by 3
+λ 1 2 3
+Data Stack:
+[0] 1.00
+[1] 2.00
+[2] 3.00
+
+λ +
+Data Stack:
+[0] 1.00
+[1] 5.00
+
+λ *
+Data Stack:
+[0] 5.00
+
+λ 10
+Data Stack:
+[0] 5.00
+[1] 10.00
+
+λ 'value
+Data Stack:
+[0] 5.00
+
+λ value
+Data Stack:
+[0] 5.00
+[1] 10.00
+
+λ { 2 * } 'double
+Data Stack:
+[0] 5.00
+[1] 10.00
+
+λ double exec
+Data Stack:
+[0] 5.00
+[1] 20.00
+
+λ +
+Data Stack:
+[0] 25.00
+```
+
+When running in debug mode (`--debug`), you'll also see the context stack:
+
+```
+λ 5 'x { x 2 * } 'double exec
+Data Stack:
+[0] 10.00
+Context Stack:
+[0] x: Number(5)
+
+λ double exec
+Data Stack:
+[0] 20.00
+Context Stack:
+[0] x: Number(5)
 ```
 
 ### Variables
