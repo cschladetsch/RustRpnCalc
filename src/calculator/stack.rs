@@ -1,13 +1,13 @@
 use crate::tokenizer::Token;
 
-#[derive(Clone)] // Allow duplication of StackValue
+#[derive(Clone)]
 pub enum StackValue {
     Number(f64),
     Coroutine(Vec<Token>),
 }
 
 pub struct Stack {
-    values: Vec<StackValue>, // Internal storage for stack values
+    values: Vec<StackValue>,
 }
 
 impl Stack {
@@ -25,14 +25,6 @@ impl Stack {
 
     pub fn pop(&mut self) -> Option<StackValue> {
         self.values.pop()
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<StackValue> {
-        self.values.iter() // Return an iterator over the Vec
-    }
-
-    pub fn len(&self) -> usize {
-        self.values.len()
     }
 
     pub fn binary_op<F>(&mut self, op: F)
@@ -53,5 +45,12 @@ impl Stack {
             self.values.push(top.clone());
         }
     }
-}
 
+    pub fn iter(&self) -> std::slice::Iter<StackValue> {
+        self.values.iter()
+    }
+
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+}

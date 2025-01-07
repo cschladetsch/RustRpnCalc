@@ -6,6 +6,7 @@ pub enum Token {
     Multiply,
     Divide,
     Dup,
+    Exec,
     Coroutine(Vec<Token>), // Represents a sequence of operations
 }
 
@@ -24,43 +25,47 @@ impl Tokenizer {
     }
 
     /// Advances to the next token
-    pub fn next_token(&mut self) -> Option<Token> {
-        self.skip_whitespace();
+	pub fn next_token(&mut self) -> Option<Token> {
+		self.skip_whitespace();
 
-        if self.position >= self.input.len() {
-            return None;
-        }
+		if self.position >= self.input.len() {
+			return None;
+		}
 
-        let ch = self.input[self.position];
-        self.position += 1;
+		let ch = self.input[self.position];
+		self.position += 1;
 
-        match ch {
-            '{' => {
-                let mut tokens = Vec::new();
-                while let Some(token) = self.next_token() {
-                    if self.peek() == Some('}') {
-                        self.position += 1; // Consume '}'
-                        break;
-                    }
-                    tokens.push(token);
-                }
-                Some(Token::Coroutine(tokens))
-            }
-            '+' => Some(Token::Plus),
-            '-' => Some(Token::Minus),
-            '*' => Some(Token::Multiply),
-            '/' => Some(Token::Divide),
-            'd' if self.peek_word("dup") => {
-                self.position += 2; // Consume 'up'
-                Some(Token::Dup)
-            }
-            '0'..='9' | '.' => Some(self.parse_number(ch)),
-            _ => {
-                eprintln!("Error: Unrecognized token '{}'", ch);
-                None
-            }
-        }
-    }
+		match ch {
+			'{' => {
+				let mut tokens = Vec::new();
+				while let Some(token) = self.next_token() {
+					if self.peek() == Some('}') {
+						self.position += 1; // Consume '}'
+						break;
+					}
+					tokens.push(token);
+				}
+				Some(Token::Coroutine(tokens))
+			}
+			'e' if self.peek_word("exec") => {
+				self.position += 3; // Consume the rest of "xec"
+				Some(Token::Exec)
+			}
+			'd' if self.peek_word("dup") => {
+				self.position += 2; // Consume "up"
+				Some(Token::Dup)
+			}
+			'+' => Some(Token::Plus),
+			'-' => Some(Token::Minus),
+			'*' => Some(Token::Multiply),
+			'/' => Some(Token::Divide),
+			'0'..='9' | '.' => Some(self.parse_number(ch)),
+			_ => {
+				eprintln!("Error: Unrecognized token '{}'", ch);
+				None
+			}
+		}
+	}
 
     fn parse_number(&mut self, first_char: char) -> Token {
         let mut number = String::new();

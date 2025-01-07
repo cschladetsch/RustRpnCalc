@@ -1,52 +1,39 @@
-pub mod tokenizer;
 pub mod calculator;
+use crate::calculator::{Calculator, operations::Operations};
+use crate::calculator::stack::StackValue;
 
-use crate::tokenizer::Token;
-
-pub struct Calculator {
-    stack: Vec<f64>,
-}
-
-impl Calculator {
-    pub fn new() -> Self {
-        Calculator { stack: Vec::new() }
-    }
-
-	pub fn execute_command(&mut self, token: Token) {
-		match token {
-			Token::Number(value) => self.stack.push(value),
-			Token::Plus => self.binary_op(|a, b| a + b),
-			Token::Minus => self.binary_op(|a, b| a - b),
-			Token::Multiply => self.binary_op(|a, b| a * b),
-			Token::Divide => self.binary_op(|a, b| a / b),
-			Token::Dup => {
-				if let Some(&top) = self.stack.last() {
-					self.stack.push(top);
-				} else {
-					eprintln!("Error: Stack is empty, cannot duplicate.");
-				}
-			}
-			Token::Coroutine(tokens) => {
-				for token in tokens {
-					self.execute_command(token); // Execute each token in the coroutine
-				}
-			}
-		}
-	}
-
-    fn binary_op<F>(&mut self, op: F)
-    where
-        F: Fn(f64, f64) -> f64,
-    {
-        if let (Some(b), Some(a)) = (self.stack.pop(), self.stack.pop()) {
-            self.stack.push(op(a, b));
-        } else {
-            eprintln!("Error: Not enough operands on the stack.");
+pub fn process_token(calculator: &mut Calculator, token: Token) {
+    match token {
+        Token::Number(value) => {
+            calculator.push(value);
         }
-    }
-
-    pub fn stack(&self) -> &[f64] {
-        &self.stack
+        Token::Plus => {
+            calculator.binary_op(Operations::add);
+        }
+        Token::Minus => {
+            calculator.binary_op(Operations::subtract);
+        }
+        Token::Multiply => {
+            calculator.binary_op(Operations::multiply);
+        }
+        Token::Divide => {
+            calculator.binary_op(Operations::divide);
+        }
+        Token::Dup => {
+            calculator.dup();
+        }
+        Token::Coroutine(tokens) => {
+            calculator.push_coroutine(tokens);
+        }
+        Token::Exec => {
+            if let Some(StackValue::Coroutine(tokens)) = calculator.pop() {
+                for token in tokens {
+                    calculator.execute_command(token);
+                }
+            } else {
+                eprintln!("Error: Top of the stack is not a coroutine.");
+            }
+        }
     }
 }
 

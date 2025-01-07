@@ -18,18 +18,27 @@ impl Calculator {
         }
     }
 
-    pub fn execute_command(&mut self, token: Token) {
-        match token {
-            Token::Number(value) => self.stack.push(value),
-            Token::Plus => self.stack.binary_op(Operations::add),
-            Token::Minus => self.stack.binary_op(Operations::subtract),
-            Token::Multiply => self.stack.binary_op(Operations::multiply),
-            Token::Divide => self.stack.binary_op(Operations::divide),
-            Token::Dup => self.stack.dup(),
-            Token::Coroutine(tokens) => {
-                self.stack.push_coroutine(tokens);
-            }
-        }
+    pub fn push(&mut self, value: f64) {
+        self.stack.push(value);
+    }
+
+    pub fn push_coroutine(&mut self, tokens: Vec<Token>) {
+        self.stack.push_coroutine(tokens);
+    }
+
+    pub fn pop(&mut self) -> Option<StackValue> {
+        self.stack.pop()
+    }
+
+    pub fn binary_op<F>(&mut self, op: F)
+    where
+        F: Fn(f64, f64) -> f64,
+    {
+        self.stack.binary_op(op);
+    }
+
+    pub fn dup(&mut self) {
+        self.stack.dup();
     }
 
     pub fn display_stack(&self) {
@@ -51,6 +60,27 @@ impl Calculator {
                         self.stack.len() - i - 1,
                         format!("{{{}}}", coroutine_str).yellow()
                     );
+                }
+            }
+        }
+    }
+
+    pub fn execute_command(&mut self, token: Token) {
+        match token {
+            Token::Number(value) => self.push(value),
+            Token::Plus => self.binary_op(Operations::add),
+            Token::Minus => self.binary_op(Operations::subtract),
+            Token::Multiply => self.binary_op(Operations::multiply),
+            Token::Divide => self.binary_op(Operations::divide),
+            Token::Dup => self.dup(),
+            Token::Coroutine(tokens) => self.push_coroutine(tokens),
+            Token::Exec => {
+                if let Some(StackValue::Coroutine(tokens)) = self.pop() {
+                    for token in tokens {
+                        self.execute_command(token);
+                    }
+                } else {
+                    eprintln!("Error: Top of the stack is not a coroutine.");
                 }
             }
         }
