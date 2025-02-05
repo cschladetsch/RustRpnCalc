@@ -42,7 +42,7 @@ impl Stack {
         if let (Some(StackValue::Number(b)), Some(StackValue::Number(a))) =
             (self.values.pop(), self.values.pop())
         {
-            self.values.push(StackValue::Number(op(a, b)));
+            self.values.push(StackValue::Number(op(b, a)));
         } else {
             eprintln!("Error: Binary operation requires two numbers.");
         }
