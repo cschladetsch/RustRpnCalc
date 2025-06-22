@@ -1,7 +1,0 @@
-#!/bin/bash
-
-rm -rf code.zip
-
-zip code.zip r src/* Readme.md
-
-
